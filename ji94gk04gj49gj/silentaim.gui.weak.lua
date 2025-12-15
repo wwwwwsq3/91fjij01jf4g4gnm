@@ -116,8 +116,7 @@ local SilentAimSettings = {
     TargetHighlightColor = Color3.fromRGB(100, 180, 255),
     IgnoredPlayers = {},
     HitSound = "Neverlose",
-    HitSoundEnabled = true,
-    ClosestPlayerMode = false
+    HitSoundEnabled = true
 }
 
 getgenv().SilentAimSettings = SilentAimSettings
@@ -381,65 +380,7 @@ task.spawn(function()
     end
 end)
 
-local function getClosestPlayerNoFOV()
-    if not SilentAimSettings.TargetPart then return end
-    local Closest
-    local ClosestDistance = math.huge
-    local ignoredPlayers = SilentAimSettings.IgnoredPlayers or {}
-    local LocalCharacter = LocalPlayer.Character
-    if not LocalCharacter then return end
-    local LocalRoot = LocalCharacter:FindFirstChild("HumanoidRootPart")
-    if not LocalRoot then return end
-    local LocalPosition = LocalRoot.Position
-
-    local function considerPartByDistance(part)
-        if not part then return end
-        local distance = (part.Position - LocalPosition).Magnitude
-        if distance < ClosestDistance then
-            Closest = part
-            ClosestDistance = distance
-        end
-    end
-
-    if NPCConfig.Enabled then
-        for model, info in pairs(NPCTargets) do
-            local humanoid = info.Humanoid
-            local rootPart = info.Root
-            if model and humanoid and rootPart and humanoid.Health > 0 and model.Parent then
-                local desiredPartName = SilentAimSettings.TargetPart == "Random" and "HumanoidRootPart" or SilentAimSettings.TargetPart
-                local targetPart = model:FindFirstChild(desiredPartName) or rootPart
-                considerPartByDistance(targetPart)
-            end
-        end
-    else
-        for _, Player in next, GetPlayers(Players) do
-            if Player == LocalPlayer then continue end
-            if ignoredPlayers[Player.Name] then continue end
-            if SilentAimSettings.TeamCheck and Player.Team == LocalPlayer.Team then continue end
-            local Character = Player.Character
-            if not Character then continue end
-            local HumanoidRootPart = FindFirstChild(Character, "HumanoidRootPart")
-            local Humanoid = FindFirstChild(Character, "Humanoid")
-            if not HumanoidRootPart or not Humanoid or Humanoid.Health <= 0 then continue end
-
-            local partToUse
-            if SilentAimSettings.TargetPart == "Random" then
-                partToUse = Character[ValidTargetParts[math.random(1, #ValidTargetParts)]]
-            else
-                partToUse = Character[SilentAimSettings.TargetPart]
-            end
-            partToUse = partToUse or HumanoidRootPart
-            considerPartByDistance(partToUse)
-        end
-    end
-    return Closest
-end
-
 local function getClosestPlayer()
-    if SilentAimSettings.ClosestPlayerMode and SilentAimSettings.Enabled then
-        return getClosestPlayerNoFOV()
-    end
-    
     if not SilentAimSettings.TargetPart then return end
     local Closest
     local DistanceToMouse
@@ -499,19 +440,6 @@ end
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 
-local function isMobileDevice()
-    local touchEnabled = UserInputService.TouchEnabled
-    local keyboardEnabled = UserInputService.KeyboardEnabled
-    local mouseEnabled = UserInputService.MouseEnabled
-    return touchEnabled and not keyboardEnabled and not mouseEnabled
-end
-
-local IsMobile = isMobileDevice()
-
-local GUI_SCALE = IsMobile and 0.7 or 1.0
-local GUI_WIDTH = IsMobile and 600 or 860
-local GUI_HEIGHT = IsMobile and 420 or 560
-
 local function createScreenGui()
     logStage("CreateScreenGui", "start")
     local gui = Instance.new("ScreenGui")
@@ -540,21 +468,16 @@ end
 local function makeDraggable(dragHandle, target)
     local dragging = false
     local dragStart, startPos
-    local activeTouchId = nil
     
     dragHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
             startPos = target.Position
-            if input.UserInputType == Enum.UserInputType.Touch then
-                activeTouchId = input
-            end
             local conn
             conn = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
-                    activeTouchId = nil
                     if conn then
                         conn:Disconnect()
                     end
@@ -564,14 +487,9 @@ local function makeDraggable(dragHandle, target)
     end)
 
     UserInputService.InputChanged:Connect(function(input)
-        if dragging then
-            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                if input.UserInputType == Enum.UserInputType.Touch and activeTouchId and input ~= activeTouchId then
-                    return
-                end
-                local delta = input.Position - dragStart
-                target.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-            end
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            target.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 end
@@ -856,15 +774,15 @@ function Library:CreateWindow(config)
     end))
 
     local main = Instance.new("Frame")
-    main.Size = UDim2.new(0, GUI_WIDTH, 0, GUI_HEIGHT)
-    main.Position = UDim2.new(0.5, -GUI_WIDTH/2, 0.5, -GUI_HEIGHT/2)
+    main.Size = UDim2.new(0, 860, 0, 560)
+    main.Position = UDim2.new(0.5, -430, 0.5, -280)
     main.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
     main.BackgroundTransparency = 0.08
     main.BorderSizePixel = 0
     main.Parent = window.Gui
     window.MainFrame = main
     window.ExpandedSize = main.Size
-    window.CollapsedSize = UDim2.new(0, GUI_WIDTH, 0, 60)
+    window.CollapsedSize = UDim2.new(0, 860, 0, 60)
     Instance.new("UICorner", main).CornerRadius = UDim.new(0, 14)
 
     local topbar = Instance.new("Frame")
@@ -1190,12 +1108,11 @@ function Library:CreateWindow(config)
                 switchKnob.Parent = switchContainer
                 Instance.new("UICorner", switchKnob).CornerRadius = UDim.new(0.5, 0)
                 
-                -- 隐藏的点击按钮（支持触摸）
+                -- 隐藏的点击按钮
                 local button = Instance.new("TextButton")
                 button.Size = UDim2.new(1, 0, 1, 0)
                 button.BackgroundTransparency = 1
                 button.Text = ""
-                button.Active = true
                 button.Parent = switchContainer
 
                 local toggle = {Value = data.Default or false, Button = button, Label = label, Callback = data.Callback, Container = switchContainer, Knob = switchKnob}
@@ -1480,14 +1397,10 @@ function Library:CreateWindow(config)
                 end
 
                 sliderUI.Frame.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        local activeInput = input
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         local connection
                         connection = UserInputService.InputChanged:Connect(function(delta)
-                            if delta.UserInputType == Enum.UserInputType.MouseMovement or delta.UserInputType == Enum.UserInputType.Touch then
-                                if delta.UserInputType == Enum.UserInputType.Touch and delta ~= activeInput then
-                                    return
-                                end
+                            if delta.UserInputType == Enum.UserInputType.MouseMovement then
                                 local relativeX = math.clamp(delta.Position.X - sliderUI.Frame.AbsolutePosition.X, 0, sliderUI.Frame.AbsoluteSize.X)
                                 local percent = relativeX / sliderUI.Frame.AbsoluteSize.X
                                 local value = slider.Min + (slider.Max - slider.Min) * percent
@@ -1863,13 +1776,6 @@ mainSwitches:AddToggle("Master_FOVCircle", {
     fov_circle.Visible = state
     -- 同步 Field Of View Tab 里的 Visible 开关
     setToggleValue("Visible", state)
-end)
-
-mainSwitches:AddToggle("ClosestPlayerMode", {
-    Text = "Closest Player Mode (Ignore FOV)",
-    Default = SilentAimSettings.ClosestPlayerMode
-}):OnChanged(function(state)
-    SilentAimSettings.ClosestPlayerMode = state
 end)
 
 local velbox = GeneralTab:AddRightGroupbox("Anti Lock")
@@ -3386,66 +3292,4 @@ end
 
 local movementConnection = RunService.Heartbeat:Connect(updateMovement)
 
-if IsMobile then
-    local mobileToggleGui = Instance.new("ScreenGui")
-    mobileToggleGui.Name = "PasteWareMobileToggle"
-    mobileToggleGui.IgnoreGuiInset = true
-    mobileToggleGui.ResetOnSpawn = false
-    mobileToggleGui.DisplayOrder = 999
-    protectgui(mobileToggleGui)
-    pcall(function()
-        mobileToggleGui.Parent = CoreGui
-    end)
-    if not mobileToggleGui.Parent then
-        mobileToggleGui.Parent = LocalPlayer:FindFirstChildOfClass("PlayerGui")
-    end
-
-    local toggleButton = Instance.new("TextButton")
-    toggleButton.Size = UDim2.new(0, 50, 0, 50)
-    toggleButton.Position = UDim2.new(0, 10, 0.5, -25)
-    toggleButton.BackgroundColor3 = Color3.fromRGB(70, 90, 180)
-    toggleButton.BackgroundTransparency = 0.3
-    toggleButton.Text = "☰"
-    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleButton.Font = Enum.Font.GothamBold
-    toggleButton.TextSize = 24
-    toggleButton.BorderSizePixel = 0
-    toggleButton.Parent = mobileToggleGui
-    Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0.5, 0)
-
-    local buttonDragging = false
-    local buttonDragStart, buttonStartPos
-    local dragMoved = false
-    local DRAG_THRESHOLD = 10
-
-    toggleButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            buttonDragging = true
-            dragMoved = false
-            buttonDragStart = input.Position
-            buttonStartPos = toggleButton.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    if not dragMoved then
-                        Window:ToggleVisibility()
-                    end
-                    buttonDragging = false
-                    dragMoved = false
-                end
-            end)
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if buttonDragging and input.UserInputType == Enum.UserInputType.Touch then
-            local delta = input.Position - buttonDragStart
-            if delta.Magnitude > DRAG_THRESHOLD then
-                dragMoved = true
-            end
-            if dragMoved then
-                toggleButton.Position = UDim2.new(buttonStartPos.X.Scale, buttonStartPos.X.Offset + delta.X, buttonStartPos.Y.Scale, buttonStartPos.Y.Offset + delta.Y)
-            end
-        end
-    end)
-end
 
