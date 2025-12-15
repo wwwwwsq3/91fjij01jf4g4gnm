@@ -468,6 +468,7 @@ end
 local function makeDraggable(dragHandle, target)
     local dragging = false
     local dragStart, startPos
+    local dragTween
     
     dragHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -489,7 +490,14 @@ local function makeDraggable(dragHandle, target)
     UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
-            target.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            local targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            if dragTween then
+                dragTween:Cancel()
+            end
+            dragTween = TweenService:Create(target, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Position = targetPos
+            })
+            dragTween:Play()
         end
     end)
 end
@@ -621,6 +629,11 @@ local function createSliderUI(parent, min, max, rounding)
 
     local corner = Instance.new("UICorner", sliderFrame)
     corner.CornerRadius = UDim.new(0.5, 0)
+    
+    local sliderStroke = Instance.new("UIStroke", sliderFrame)
+    sliderStroke.Color = Color3.fromRGB(60, 70, 100)
+    sliderStroke.Transparency = 0.6
+    sliderStroke.Thickness = 1
 
     local bar = Instance.new("Frame")
     bar.BackgroundColor3 = Color3.fromRGB(100, 140, 255)
@@ -629,6 +642,10 @@ local function createSliderUI(parent, min, max, rounding)
     bar.ZIndex = 2
     bar.Parent = sliderFrame
     Instance.new("UICorner", bar).CornerRadius = UDim.new(0.5, 0)
+    
+    -- 滑块渐变色
+    local barGradient = Instance.new("UIGradient", bar)
+    barGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 120, 220)), ColorSequenceKeypoint.new(1, Color3.fromRGB(140, 100, 255))})
     
     -- 圆形手柄
     local knob = Instance.new("Frame")
@@ -639,6 +656,11 @@ local function createSliderUI(parent, min, max, rounding)
     knob.ZIndex = 3
     knob.Parent = bar
     Instance.new("UICorner", knob).CornerRadius = UDim.new(0.5, 0)
+    
+    local knobStroke = Instance.new("UIStroke", knob)
+    knobStroke.Color = Color3.fromRGB(100, 140, 255)
+    knobStroke.Transparency = 0.3
+    knobStroke.Thickness = 2
 
     local valueLabel = Instance.new("TextLabel")
     valueLabel.BackgroundTransparency = 1
@@ -677,6 +699,11 @@ local function createDropdownMenu(button)
     holder.Parent = button
 
     Instance.new("UICorner", holder).CornerRadius = UDim.new(0, 10)
+    
+    local holderStroke = Instance.new("UIStroke", holder)
+    holderStroke.Color = Color3.fromRGB(70, 85, 140)
+    holderStroke.Transparency = 0.5
+    holderStroke.Thickness = 1
     
     local holderPadding = Instance.new("UIPadding", holder)
     holderPadding.PaddingTop = UDim.new(0, 6)
@@ -732,7 +759,13 @@ function Library:SetCollapsed(state)
             targetSize = self.ExpandedSize or self.MainFrame.Size
         end
         if targetSize then
-            self.MainFrame.Size = targetSize
+            if self.CollapseTween then
+                self.CollapseTween:Cancel()
+            end
+            self.CollapseTween = TweenService:Create(self.MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = targetSize
+            })
+            self.CollapseTween:Play()
         end
     end
 end
@@ -784,6 +817,12 @@ function Library:CreateWindow(config)
     window.ExpandedSize = main.Size
     window.CollapsedSize = UDim2.new(0, 860, 0, 60)
     Instance.new("UICorner", main).CornerRadius = UDim.new(0, 14)
+    
+    -- 添加外发光边框效果
+    local mainStroke = Instance.new("UIStroke", main)
+    mainStroke.Color = Color3.fromRGB(100, 120, 255)
+    mainStroke.Transparency = 0.7
+    mainStroke.Thickness = 1.5
 
     local topbar = Instance.new("Frame")
     topbar.Size = UDim2.new(1, 0, 0, 52)
@@ -802,6 +841,9 @@ function Library:CreateWindow(config)
     topAccent.BorderSizePixel = 0
     topAccent.Parent = topbar
     Instance.new("UICorner", topAccent).CornerRadius = UDim.new(0, 1)
+    
+    local topGradient = Instance.new("UIGradient", topAccent)
+    topGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 100, 255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 100, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 100, 255))})
 
     local title = Instance.new("TextLabel")
     title.BackgroundTransparency = 1
@@ -813,6 +855,10 @@ function Library:CreateWindow(config)
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Text = config.Title or "PasteWare"
     title.Parent = topbar
+    
+    -- 标题渐变效果
+    local titleGradient = Instance.new("UIGradient", title)
+    titleGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 200, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))})
 
     local collapseButton = Instance.new("TextButton")
     collapseButton.Size = UDim2.new(0, 36, 0, 36)
@@ -826,13 +872,19 @@ function Library:CreateWindow(config)
     collapseButton.BorderSizePixel = 0
     collapseButton.Parent = topbar
     Instance.new("UICorner", collapseButton).CornerRadius = UDim.new(0, 10)
+    local collapseStroke = Instance.new("UIStroke", collapseButton)
+    collapseStroke.Color = Color3.fromRGB(100, 120, 200)
+    collapseStroke.Transparency = 0.6
+    collapseStroke.Thickness = 1
     
-    -- 折叠按钮悬停效果（简化）
+    -- 折叠按钮悬停效果
     collapseButton.MouseEnter:Connect(function()
-        collapseButton.BackgroundColor3 = Color3.fromRGB(70, 80, 120)
+        TweenService:Create(collapseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70, 80, 120)}):Play()
+        TweenService:Create(collapseStroke, TweenInfo.new(0.2), {Transparency = 0.3}):Play()
     end)
     collapseButton.MouseLeave:Connect(function()
-        collapseButton.BackgroundColor3 = Color3.fromRGB(50, 55, 80)
+        TweenService:Create(collapseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 55, 80)}):Play()
+        TweenService:Create(collapseStroke, TweenInfo.new(0.2), {Transparency = 0.6}):Play()
     end)
 
     local deleteButton = Instance.new("TextButton")
@@ -847,13 +899,19 @@ function Library:CreateWindow(config)
     deleteButton.BorderSizePixel = 0
     deleteButton.Parent = topbar
     Instance.new("UICorner", deleteButton).CornerRadius = UDim.new(0, 10)
+    local deleteStroke = Instance.new("UIStroke", deleteButton)
+    deleteStroke.Color = Color3.fromRGB(200, 80, 100)
+    deleteStroke.Transparency = 0.6
+    deleteStroke.Thickness = 1
     
-    -- 关闭按钮悬停效果（简化）
+    -- 关闭按钮悬停效果
     deleteButton.MouseEnter:Connect(function()
-        deleteButton.BackgroundColor3 = Color3.fromRGB(180, 60, 80)
+        TweenService:Create(deleteButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(180, 60, 80)}):Play()
+        TweenService:Create(deleteStroke, TweenInfo.new(0.2), {Transparency = 0.2}):Play()
     end)
     deleteButton.MouseLeave:Connect(function()
-        deleteButton.BackgroundColor3 = Color3.fromRGB(120, 45, 60)
+        TweenService:Create(deleteButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(120, 45, 60)}):Play()
+        TweenService:Create(deleteStroke, TweenInfo.new(0.2), {Transparency = 0.6}):Play()
     end)
 
     window.CollapseButton = collapseButton
@@ -914,19 +972,23 @@ function Library:CreateWindow(config)
         if self.ActiveTab == tab then return end
         if self.ActiveTab then
             local oldBtn = self.ActiveTab.Button
-            oldBtn.BackgroundColor3 = Color3.fromRGB(30, 32, 45)
-            oldBtn.TextTransparency = 0.3
+            TweenService:Create(oldBtn, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                BackgroundColor3 = Color3.fromRGB(30, 32, 45),
+                TextTransparency = 0.3
+            }):Play()
             if oldBtn:FindFirstChild("TabIndicator") then
-                oldBtn.TabIndicator.BackgroundTransparency = 1
+                TweenService:Create(oldBtn.TabIndicator, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
             end
             self.ActiveTab.Content.Visible = false
         end
         self.ActiveTab = tab
         tab.Content.Visible = true
-        tab.Button.BackgroundColor3 = Color3.fromRGB(70, 90, 180)
-        tab.Button.TextTransparency = 0
+        TweenService:Create(tab.Button, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(70, 90, 180),
+            TextTransparency = 0
+        }):Play()
         if tab.Button:FindFirstChild("TabIndicator") then
-            tab.Button.TabIndicator.BackgroundTransparency = 0
+            TweenService:Create(tab.Button.TabIndicator, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
         end
     end
 
@@ -954,15 +1016,15 @@ function Library:CreateWindow(config)
         tabIndicator.Parent = tab.Button
         Instance.new("UICorner", tabIndicator).CornerRadius = UDim.new(0, 2)
         
-        -- 悬停效果（简化）
+        -- 悬停效果
         tab.Button.MouseEnter:Connect(function()
             if window.ActiveTab ~= tab then
-                tab.Button.BackgroundColor3 = Color3.fromRGB(45, 50, 70)
+                TweenService:Create(tab.Button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(45, 50, 70)}):Play()
             end
         end)
         tab.Button.MouseLeave:Connect(function()
             if window.ActiveTab ~= tab then
-                tab.Button.BackgroundColor3 = Color3.fromRGB(30, 32, 45)
+                TweenService:Create(tab.Button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(30, 32, 45)}):Play()
             end
         end)
 
@@ -1022,6 +1084,12 @@ function Library:CreateWindow(config)
             box.Frame.Parent = parent
             Instance.new("UICorner", box.Frame).CornerRadius = UDim.new(0, 12)
             
+            -- 分组框边框发光
+            local boxStroke = Instance.new("UIStroke", box.Frame)
+            boxStroke.Color = Color3.fromRGB(80, 100, 180)
+            boxStroke.Transparency = 0.8
+            boxStroke.Thickness = 1
+            
             -- 分组框内边距
             local boxPadding = Instance.new("UIPadding", box.Frame)
             boxPadding.PaddingBottom = UDim.new(0, 12)
@@ -1067,12 +1135,12 @@ function Library:CreateWindow(config)
                 local corner = Instance.new("UICorner", row)
                 corner.CornerRadius = UDim.new(0, 10)
                 
-                -- 行悬停效果（简化）
+                -- 行悬停效果
                 row.MouseEnter:Connect(function()
-                    row.BackgroundColor3 = Color3.fromRGB(40, 45, 65)
+                    TweenService:Create(row, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(40, 45, 65)}):Play()
                 end)
                 row.MouseLeave:Connect(function()
-                    row.BackgroundColor3 = Color3.fromRGB(32, 36, 52)
+                    TweenService:Create(row, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(32, 36, 52)}):Play()
                 end)
                 return row
             end
@@ -1099,6 +1167,11 @@ function Library:CreateWindow(config)
                 switchContainer.Parent = row
                 Instance.new("UICorner", switchContainer).CornerRadius = UDim.new(0.5, 0)
                 
+                local switchStroke = Instance.new("UIStroke", switchContainer)
+                switchStroke.Color = Color3.fromRGB(70, 80, 110)
+                switchStroke.Transparency = 0.5
+                switchStroke.Thickness = 1
+                
                 -- 滑块圆圈
                 local switchKnob = Instance.new("Frame")
                 switchKnob.Size = UDim2.new(0, 20, 0, 20)
@@ -1119,13 +1192,15 @@ function Library:CreateWindow(config)
 
                 function toggle:SetValue(val)
                     self.Value = val
+                    -- 平滑动画
                     local targetPos = val and UDim2.new(1, -23, 0.5, -10) or UDim2.new(0, 3, 0.5, -10)
                     local targetBg = val and Color3.fromRGB(80, 160, 120) or Color3.fromRGB(50, 55, 75)
                     local targetKnob = val and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 185, 200)
+                    local targetStroke = val and Color3.fromRGB(100, 200, 150) or Color3.fromRGB(70, 80, 110)
                     
-                    switchKnob.Position = targetPos
-                    switchKnob.BackgroundColor3 = targetKnob
-                    switchContainer.BackgroundColor3 = targetBg
+                    TweenService:Create(switchKnob, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {Position = targetPos, BackgroundColor3 = targetKnob}):Play()
+                    TweenService:Create(switchContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {BackgroundColor3 = targetBg}):Play()
+                    TweenService:Create(switchStroke, TweenInfo.new(0.2), {Color = targetStroke}):Play()
                     
                     if self.Callback then
                         self.Callback(val)
@@ -1166,6 +1241,11 @@ function Library:CreateWindow(config)
                     colorButton.Text = ""
                     colorButton.BackgroundColor3 = (cfg and cfg.Default) or Color3.new(1, 1, 1)
                     Instance.new("UICorner", colorButton).CornerRadius = UDim.new(0, 8)
+                    
+                    local colorStroke = Instance.new("UIStroke", colorButton)
+                    colorStroke.Color = Color3.fromRGB(255, 255, 255)
+                    colorStroke.Transparency = 0.7
+                    colorStroke.Thickness = 2
 
                     local pickerFrame = Instance.new("Frame")
                     pickerFrame.BackgroundColor3 = Color3.fromRGB(22, 25, 38)
@@ -1175,6 +1255,11 @@ function Library:CreateWindow(config)
                     pickerFrame.ZIndex = 15
                     pickerFrame.Parent = colorButton
                     Instance.new("UICorner", pickerFrame).CornerRadius = UDim.new(0, 12)
+                    
+                    local pickerStroke = Instance.new("UIStroke", pickerFrame)
+                    pickerStroke.Color = Color3.fromRGB(80, 100, 160)
+                    pickerStroke.Transparency = 0.5
+                    pickerStroke.Thickness = 1
 
                     local colorInput = Instance.new("TextBox")
                     colorInput.Size = UDim2.new(1, -16, 0, 32)
@@ -1190,6 +1275,11 @@ function Library:CreateWindow(config)
                     colorInput.ZIndex = 16
                     colorInput.Parent = pickerFrame
                     Instance.new("UICorner", colorInput).CornerRadius = UDim.new(0, 8)
+                    
+                    local colorInputStroke = Instance.new("UIStroke", colorInput)
+                    colorInputStroke.Color = Color3.fromRGB(60, 70, 100)
+                    colorInputStroke.Transparency = 0.5
+                    colorInputStroke.Thickness = 1
 
                     local confirm = Instance.new("TextButton")
                     confirm.Size = UDim2.new(1, -16, 0, 34)
@@ -1204,12 +1294,12 @@ function Library:CreateWindow(config)
                     confirm.Parent = pickerFrame
                     Instance.new("UICorner", confirm).CornerRadius = UDim.new(0, 8)
                     
-                    -- 确认按钮悬停效果（简化）
+                    -- 确认按钮悬停效果
                     confirm.MouseEnter:Connect(function()
-                        confirm.BackgroundColor3 = Color3.fromRGB(90, 130, 220)
+                        TweenService:Create(confirm, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(90, 130, 220)}):Play()
                     end)
                     confirm.MouseLeave:Connect(function()
-                        confirm.BackgroundColor3 = Color3.fromRGB(70, 100, 180)
+                        TweenService:Create(confirm, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(70, 100, 180)}):Play()
                     end)
 
                     local picker = {Value = (cfg and cfg.Default) or Color3.new(1, 1, 1)}
@@ -1287,18 +1377,30 @@ function Library:CreateWindow(config)
                 button.Parent = row
                 Instance.new("UICorner", button).CornerRadius = UDim.new(0, 10)
                 
-                -- 按钮悬停和点击效果（简化）
+                -- 按钮渐变背景
+                local btnGradient = Instance.new("UIGradient", button)
+                btnGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 110, 200)), ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 80, 180))})
+                btnGradient.Rotation = 45
+                
+                local btnStroke = Instance.new("UIStroke", button)
+                btnStroke.Color = Color3.fromRGB(120, 150, 255)
+                btnStroke.Transparency = 0.5
+                btnStroke.Thickness = 1
+                
+                -- 按钮悬停和点击效果
                 button.MouseEnter:Connect(function()
-                    button.BackgroundColor3 = Color3.fromRGB(90, 120, 220)
+                    TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(90, 120, 220)}):Play()
+                    TweenService:Create(btnStroke, TweenInfo.new(0.2), {Transparency = 0.2}):Play()
                 end)
                 button.MouseLeave:Connect(function()
-                    button.BackgroundColor3 = Color3.fromRGB(70, 95, 180)
+                    TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70, 95, 180)}):Play()
+                    TweenService:Create(btnStroke, TweenInfo.new(0.2), {Transparency = 0.5}):Play()
                 end)
                 button.MouseButton1Down:Connect(function()
-                    button.BackgroundColor3 = Color3.fromRGB(50, 70, 140)
+                    TweenService:Create(button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(50, 70, 140)}):Play()
                 end)
                 button.MouseButton1Up:Connect(function()
-                    button.BackgroundColor3 = Color3.fromRGB(90, 120, 220)
+                    TweenService:Create(button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(90, 120, 220)}):Play()
                 end)
                 
                 button.MouseButton1Click:Connect(callback or function() end)
@@ -1331,6 +1433,19 @@ function Library:CreateWindow(config)
                 boxInput.PlaceholderText = data.Placeholder or ""
                 boxInput.Parent = row
                 Instance.new("UICorner", boxInput).CornerRadius = UDim.new(0, 8)
+                
+                local inputStroke = Instance.new("UIStroke", boxInput)
+                inputStroke.Color = Color3.fromRGB(60, 70, 100)
+                inputStroke.Transparency = 0.5
+                inputStroke.Thickness = 1
+                
+                -- 输入框焦点效果
+                boxInput.Focused:Connect(function()
+                    TweenService:Create(inputStroke, TweenInfo.new(0.15), {Color = Color3.fromRGB(100, 130, 220), Transparency = 0.2}):Play()
+                end)
+                boxInput.FocusLost:Connect(function()
+                    TweenService:Create(inputStroke, TweenInfo.new(0.15), {Color = Color3.fromRGB(60, 70, 100), Transparency = 0.5}):Play()
+                end)
 
                 local input = {Value = boxInput.Text}
 
@@ -1452,12 +1567,17 @@ function Library:CreateWindow(config)
                 button.Parent = row
                 Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
                 
-                -- 下拉按钮悬停效果（简化）
+                local dropBtnStroke = Instance.new("UIStroke", button)
+                dropBtnStroke.Color = Color3.fromRGB(80, 100, 160)
+                dropBtnStroke.Transparency = 0.6
+                dropBtnStroke.Thickness = 1
+                
+                -- 下拉按钮悬停效果
                 button.MouseEnter:Connect(function()
-                    button.BackgroundColor3 = Color3.fromRGB(60, 70, 100)
+                    TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(60, 70, 100)}):Play()
                 end)
                 button.MouseLeave:Connect(function()
-                    button.BackgroundColor3 = Color3.fromRGB(45, 50, 70)
+                    TweenService:Create(button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(45, 50, 70)}):Play()
                 end)
 
                 local menu = createDropdownMenu(button)
@@ -1496,12 +1616,12 @@ function Library:CreateWindow(config)
                         option.Parent = menu
                         Instance.new("UICorner", option).CornerRadius = UDim.new(0, 8)
                         
-                        -- 选项悬停效果（简化）
+                        -- 选项悬停效果
                         option.MouseEnter:Connect(function()
-                            option.BackgroundColor3 = Color3.fromRGB(70, 90, 150)
+                            TweenService:Create(option, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(70, 90, 150)}):Play()
                         end)
                         option.MouseLeave:Connect(function()
-                            option.BackgroundColor3 = Color3.fromRGB(35, 40, 55)
+                            TweenService:Create(option, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(35, 40, 55)}):Play()
                         end)
 
                         option.MouseButton1Click:Connect(function()
@@ -1621,6 +1741,11 @@ function Library:CreateWindow(config)
             holder.Parent = parent
             Instance.new("UICorner", holder).CornerRadius = UDim.new(0, 12)
             
+            local tabboxStroke = Instance.new("UIStroke", holder)
+            tabboxStroke.Color = Color3.fromRGB(80, 100, 180)
+            tabboxStroke.Transparency = 0.8
+            tabboxStroke.Thickness = 1
+            
             local tabboxPadding = Instance.new("UIPadding", holder)
             tabboxPadding.PaddingBottom = UDim.new(0, 12)
 
@@ -1665,13 +1790,11 @@ function Library:CreateWindow(config)
             function tabbox:Select(entry)
                 if self.Active == entry then return end
                 if self.Active then
-                    self.Active.Button.BackgroundColor3 = Color3.fromRGB(38, 42, 58)
-                    self.Active.Button.TextTransparency = 0.3
+                    TweenService:Create(self.Active.Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(38, 42, 58), TextTransparency = 0.3}):Play()
                     self.Active.Group.Frame.Visible = false
                 end
                 self.Active = entry
-                entry.Button.BackgroundColor3 = Color3.fromRGB(70, 95, 180)
-                entry.Button.TextTransparency = 0
+                TweenService:Create(entry.Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70, 95, 180), TextTransparency = 0}):Play()
                 entry.Group.Frame.Visible = true
             end
 
@@ -1689,14 +1812,14 @@ function Library:CreateWindow(config)
                 button.Parent = buttonBar
                 Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
                 
-                -- Tabbox子标签悬停效果（简化）
+                -- Tabbox子标签悬停效果
                 button.MouseEnter:Connect(function()
                     if tabbox.Active and tabbox.Active.Button == button then return end
-                    button.BackgroundColor3 = Color3.fromRGB(50, 58, 80)
+                    TweenService:Create(button, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(50, 58, 80)}):Play()
                 end)
                 button.MouseLeave:Connect(function()
                     if tabbox.Active and tabbox.Active.Button == button then return end
-                    button.BackgroundColor3 = Color3.fromRGB(38, 42, 58)
+                    TweenService:Create(button, TweenInfo.new(0.12), {BackgroundColor3 = Color3.fromRGB(38, 42, 58)}):Play()
                 end)
 
                 local group = createGroupbox(content, tabName)
@@ -1967,25 +2090,6 @@ Main:AddToggle("RemoteHook", {
     Tooltip = "拦截 RemoteEvent 参数，尝试修改常见射击数据格式"
 }):OnChanged(function(state)
     SilentAimSettings.RemoteHook = state
-end)
-
-Main:AddToggle("BulletRedirect", {
-    Text = "Bullet Redirect (物理子弹)",
-    Default = false,
-    Tooltip = "重定向物理子弹(BasePart)飞向目标，用于 Touched 碰撞判定的游戏"
-}):OnChanged(function(state)
-    SilentAimSettings.BulletRedirect = state
-end)
-
-Main:AddSlider("BulletRedirectSpeed", {
-    Text = "Bullet Redirect Speed",
-    Default = 500,
-    Min = 100,
-    Max = 2000,
-    Rounding = 0,
-    Tooltip = "子弹重定向速度"
-}):OnChanged(function(value)
-    SilentAimSettings.BulletRedirectSpeed = value
 end)
 
 Main:AddDropdown("TargetPart", {
@@ -2435,8 +2539,6 @@ end))
 
 SilentAimSettings.MouseHitHook = false
 SilentAimSettings.RemoteHook = false
-SilentAimSettings.BulletRedirect = false
-SilentAimSettings.BulletRedirectSpeed = 500
 
 -- Mouse.Hit / Mouse.Target 拦截
 -- 只在检测到射击相关调用时才拦截，避免影响相机控制
@@ -2523,77 +2625,6 @@ oldFireServer = hookfunction(Instance.new("RemoteEvent").FireServer, newcclosure
     end
     return oldFireServer(self, ...)
 end))
-
--- ==================== 物理子弹重定向 ====================
--- 用于使用 BasePart 作为子弹并通过 Touched 事件判定碰撞的游戏
--- 监听新创建的子弹并将其重定向到目标
-
-local bulletKeywords = {"bullet", "projectile", "shell", "round", "shot", "ammo"}
-local trackedBullets = {}
-
-local function isBulletPart(part)
-    if not part:IsA("BasePart") then return false end
-    local name = part.Name:lower()
-    for _, keyword in ipairs(bulletKeywords) do
-        if name:find(keyword) then return true end
-    end
-    -- 检查是否是新创建的、快速移动的小物体
-    if part.Size.Magnitude < 5 and part.Velocity.Magnitude > 50 then
-        return true
-    end
-    return false
-end
-
-local function redirectBullet(bullet)
-    if trackedBullets[bullet] then return end
-    trackedBullets[bullet] = true
-    
-    task.spawn(function()
-        local startTime = tick()
-        local maxLifetime = 5 -- 最多追踪5秒
-        
-        while bullet and bullet.Parent and (tick() - startTime) < maxLifetime do
-            if SilentAimSettings.Enabled and SilentAimSettings.BulletRedirect then
-                local HitPart = getClosestPlayer()
-                if HitPart then
-                    local targetPos = HitPart.Position
-                    local bulletPos = bullet.Position
-                    local direction = (targetPos - bulletPos).Unit
-                    local speed = SilentAimSettings.BulletRedirectSpeed or 500
-                    
-                    -- 设置子弹速度指向目标
-                    bullet.Velocity = direction * speed
-                    -- 也可以直接设置 CFrame
-                    bullet.CFrame = CFrame.new(bulletPos, targetPos)
-                end
-            end
-            task.wait()
-        end
-        
-        trackedBullets[bullet] = nil
-    end)
-end
-
--- 监听 workspace 中新创建的部件
-workspace.DescendantAdded:Connect(function(descendant)
-    if SilentAimSettings.Enabled and SilentAimSettings.BulletRedirect then
-        if isBulletPart(descendant) then
-            redirectBullet(descendant)
-        end
-    end
-end)
-
--- 额外监听常见的子弹容器
-pcall(function()
-    local particlesFolder = workspace:FindFirstChild("Particles") or workspace:FindFirstChild("Bullets") or workspace:FindFirstChild("Projectiles")
-    if particlesFolder then
-        particlesFolder.ChildAdded:Connect(function(child)
-            if SilentAimSettings.Enabled and SilentAimSettings.BulletRedirect and child:IsA("BasePart") then
-                redirectBullet(child)
-            end
-        end)
-    end
-end)
 
 local worldbox = VisualsTab:AddRightGroupbox("World")
 
