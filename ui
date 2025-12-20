@@ -273,12 +273,7 @@ local Library = {
 
     SaveManager = {};
     ThemeManager = {};
-}
-
-Library.InputService = InputService
-Library.TweenService = TweenService
-Library.UserInputService = InputService
-
+    
     Toggles = Toggles;
     Options = Options;
     Labels = Labels;
@@ -293,6 +288,10 @@ Library.UserInputService = InputService
     BlurEnabled = true;
     AnimationsEnabled = true;
 }
+
+Library.InputService = InputService
+Library.TweenService = TweenService
+Library.UserInputService = InputService
 
 if RunService:IsStudio() then
    Library.IsMobile = InputService.TouchEnabled and not InputService.MouseEnabled 
