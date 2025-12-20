@@ -2505,6 +2505,8 @@ do
                 ColorPicker.Sat = (MouseX - MinX) / (MaxX - MinX)
                 ColorPicker.Vib = 1 - ((MouseY - MinY) / (MaxY - MinY))
                 ColorPicker:Display()
+                Library:SafeCallback(ColorPicker.Callback, ColorPicker.Value, ColorPicker.Transparency)
+                Library:SafeCallback(ColorPicker.Changed, ColorPicker.Value, ColorPicker.Transparency)
 
                 RunService.RenderStepped:Wait()
             end
@@ -2522,6 +2524,8 @@ do
 
                 ColorPicker.Hue = ((MouseY - MinY) / (MaxY - MinY))
                 ColorPicker:Display()
+                Library:SafeCallback(ColorPicker.Callback, ColorPicker.Value, ColorPicker.Transparency)
+                Library:SafeCallback(ColorPicker.Changed, ColorPicker.Value, ColorPicker.Transparency)
 
                 RunService.RenderStepped:Wait()
             end
