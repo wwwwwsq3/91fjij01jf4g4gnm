@@ -8,7 +8,6 @@ local Teams = cloneref(game:GetService("Teams"))
 local Players = cloneref(game:GetService("Players"))
 local RunService = cloneref(game:GetService("RunService"))
 local TweenService = cloneref(game:GetService("TweenService"))
-
 local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
@@ -84,8 +83,8 @@ ModalElement.Parent = ScreenGui
 local LibraryMainOuterFrame = nil
 
 local Toggles = {}
-local KeyPicker = {}
 local Options = {}
+local Labels = {}
 local Buttons = {}
 local Tooltips = {}
 
@@ -271,9 +270,9 @@ local Library = {
     ShowToggleFrameInKeybinds = true;
     NotifyOnError = false;
 
-    SaveManager = {};
-    ThemeManager = {};
-    
+    SaveManager = nil;
+    ThemeManager = nil;
+
     Toggles = Toggles;
     Options = Options;
     Labels = Labels;
@@ -288,10 +287,6 @@ local Library = {
     BlurEnabled = true;
     AnimationsEnabled = true;
 }
-
-Library.InputService = InputService
-Library.TweenService = TweenService
-Library.UserInputService = InputService
 
 if RunService:IsStudio() then
    Library.IsMobile = InputService.TouchEnabled and not InputService.MouseEnabled 
