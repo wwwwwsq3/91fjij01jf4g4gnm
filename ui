@@ -3402,6 +3402,159 @@ do
         return Label
     end
     
+    -- 允许 Groupbox 直接创建 Tabbox（嵌套标签组）
+    function BaseGroupboxFuncs:AddTabbox(Info)
+        Info = typeof(Info) == "table" and Info or { Name = tostring(Info or "Tabbox") }
+
+        local Tabbox = {
+            Tabs = {};
+        }
+
+        local Container = self.Container
+        if not Container then
+            warn("Groupbox missing Container, cannot create Tabbox")
+            return nil
+        end
+
+        -- 标题
+        local TitleLabel = Library:CreateLabel({
+            Size = UDim2.new(1, 0, 0, 14);
+            TextSize = 14;
+            Text = Info.Name or "Tabbox";
+            TextXAlignment = Enum.TextXAlignment.Left;
+            ZIndex = 5;
+            Parent = Container;
+        })
+
+        local TabboxButtons = Library:Create('Frame', {
+            BackgroundTransparency = 1;
+            Position = UDim2.new(0, 0, 0, 1);
+            Size = UDim2.new(1, 0, 0, 18);
+            ZIndex = 8;
+            Parent = Container;
+        })
+
+        Library:Create('UIListLayout', {
+            FillDirection = Enum.FillDirection.Horizontal;
+            HorizontalAlignment = Enum.HorizontalAlignment.Left;
+            SortOrder = Enum.SortOrder.LayoutOrder;
+            Parent = TabboxButtons;
+        })
+
+        function Tabbox:AddTab(Name)
+            local Tab = {
+                Elements = {};
+                Container = nil;
+                TableType = "TabboxTab";
+            }
+
+            local Button = Library:Create('Frame', {
+                BackgroundColor3 = Library.SecondaryColor;
+                BorderColor3 = Library.OutlineColor;
+                BorderMode = Enum.BorderMode.Inset;
+                Size = UDim2.new(0.5, 0, 1, 0);
+                ZIndex = 8;
+                Parent = TabboxButtons;
+            })
+
+            local ButtonUICorner = Library:Create('UICorner', {
+                CornerRadius = UDim.new(0, 3);
+                Parent = Button;
+            })
+
+            Library:AddToRegistry(Button, {
+                BackgroundColor3 = 'SecondaryColor';
+                BorderColor3 = 'OutlineColor';
+            })
+
+            local ButtonLabel = Library:CreateLabel({
+                Size = UDim2.new(1, 0, 1, 0);
+                TextSize = 13;
+                Text = Name or "";
+                ZIndex = 9;
+                Parent = Button;
+                RichText = true;
+            })
+
+            Library:OnHighlight(Button, Button,
+                { BorderColor3 = 'AccentColor' },
+                { BorderColor3 = 'OutlineColor' }
+            )
+
+            local TabContainer = Library:Create('Frame', {
+                BackgroundTransparency = 1;
+                Size = UDim2.new(1, 0, 0, 0);
+                ZIndex = 7;
+                Visible = false;
+                Parent = Container;
+            })
+
+            Library:Create('UIListLayout', {
+                FillDirection = Enum.FillDirection.Vertical;
+                SortOrder = Enum.SortOrder.LayoutOrder;
+                Parent = TabContainer;
+            })
+
+            function Tab:Show()
+                for _, t in next, Tabbox.Tabs do
+                    t:Hide()
+                end
+
+                TabContainer.Visible = true
+                Button.BackgroundColor3 = Library.AccentColor
+                Button.BorderColor3 = Library.AccentColorDark
+                ButtonLabel.TextColor3 = Color3.new(1, 1, 1)
+            end
+
+            function Tab:Hide()
+                TabContainer.Visible = false
+                Button.BackgroundColor3 = Library.SecondaryColor
+                Button.BorderColor3 = Library.OutlineColor
+                ButtonLabel.TextColor3 = Library.FontColor
+            end
+
+            function Tab:Resize()
+                local TabCount = 0
+                for _, t in next, Tabbox.Tabs do
+                    TabCount = TabCount + 1
+                end
+
+                for _, btn in next, TabboxButtons:GetChildren() do
+                    if btn:IsA('GuiObject') then
+                        btn.Size = UDim2.new(1 / TabCount, 0, 1, 0)
+                    end
+                end
+            end
+
+            Button.InputBegan:Connect(function(Input)
+                if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                    Tab:Show()
+                end
+            end)
+
+            Tab.Container = TabContainer
+            Tabbox.Tabs[Name or ""] = Tab
+            setmetatable(Tab, BaseGroupbox)
+            Tab:AddBlank(3)
+            Tab:Resize()
+
+            if #TabboxButtons:GetChildren() == 2 then
+                Tab:Show()
+            end
+
+            return Tab
+        end
+
+        -- 初始按钮宽度
+        for _, btn in next, TabboxButtons:GetChildren() do
+            if btn:IsA('GuiObject') then
+                btn.Size = UDim2.new(1, 0, 1, 0)
+            end
+        end
+
+        return Tabbox
+    end
+    
     -- 允许 Groupbox 直接添加颜色选择器（包装 Label 的 AddColorPicker）
     function BaseGroupboxFuncs:AddColorPicker(Idx, Info)
         Info = Info or {}
