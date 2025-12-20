@@ -8,9 +8,6 @@ local Teams = cloneref(game:GetService("Teams"))
 local Players = cloneref(game:GetService("Players"))
 local RunService = cloneref(game:GetService("RunService"))
 local TweenService = cloneref(game:GetService("TweenService"))
-Library.InputService = InputService
-Library.TweenService = TweenService
-Library.UserInputService = InputService
 
 local Lighting = game:GetService("Lighting")
 
@@ -274,8 +271,13 @@ local Library = {
     ShowToggleFrameInKeybinds = true;
     NotifyOnError = false;
 
-    SaveManager = nil;
-    ThemeManager = nil;
+    SaveManager = {};
+    ThemeManager = {};
+}
+
+Library.InputService = InputService
+Library.TweenService = TweenService
+Library.UserInputService = InputService
 
     Toggles = Toggles;
     Options = Options;
