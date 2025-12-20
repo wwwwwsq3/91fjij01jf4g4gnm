@@ -288,6 +288,31 @@ local Library = {
     AnimationsEnabled = true;
 }
 
+-- 提供缺失的接口，避免外部脚本调用时报错
+function Library:GetToggle(Idx)
+    return Toggles[Idx]
+end
+
+function Library:ApplyToTab(Tab)
+    -- 兼容可能传入的表或实例，缺省为安全退出
+    if not Tab then
+        return
+    end
+
+    local Target = (typeof(Tab) == "table" and (Tab.TabFrame or Tab.Container or Tab.Frame)) or (typeof(Tab) == "Instance" and Tab) or nil
+    if Target and typeof(Target) == "Instance" then
+        -- 仅在实例存在时登记主题颜色，避免 nil 访问
+        Library:AddToRegistry(Target, {
+            BackgroundColor3 = 'MainColor';
+            BorderColor3 = 'OutlineColor';
+        })
+    end
+end
+
+function Library:CreateThemeManager()
+    return Library.ThemeManager
+end
+
 if RunService:IsStudio() then
    Library.IsMobile = InputService.TouchEnabled and not InputService.MouseEnabled 
 else
