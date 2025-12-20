@@ -8,6 +8,10 @@ local Teams = cloneref(game:GetService("Teams"))
 local Players = cloneref(game:GetService("Players"))
 local RunService = cloneref(game:GetService("RunService"))
 local TweenService = cloneref(game:GetService("TweenService"))
+Library.InputService = InputService
+Library.TweenService = TweenService
+Library.UserInputService = InputService
+
 local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
@@ -83,8 +87,8 @@ ModalElement.Parent = ScreenGui
 local LibraryMainOuterFrame = nil
 
 local Toggles = {}
+local KeyPicker = {}
 local Options = {}
-local Labels = {}
 local Buttons = {}
 local Tooltips = {}
 
@@ -236,6 +240,10 @@ local Library = {
     Black = Color3.new(0, 0, 0);
     Font = Enum.Font.SourceSansSemibold or Enum.Font.GothamSemibold or Enum.Font.SourceSans;
 
+    OpenedFrames = {};
+    DependencyBoxes = {};
+    DependencyGroupboxes = {};
+
     UnloadSignals = {};
     Signals = {};
 
@@ -283,15 +291,6 @@ local Library = {
     BlurEnabled = true;
     AnimationsEnabled = true;
 }
-
--- 兼容旧脚本的辅助方法
-function Library:GetToggle(idx)
-    return Toggles[idx]
-end
-
-function Library:GetOption(idx)
-    return Options[idx]
-end
 
 if RunService:IsStudio() then
    Library.IsMobile = InputService.TouchEnabled and not InputService.MouseEnabled 
