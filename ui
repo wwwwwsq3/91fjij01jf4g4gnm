@@ -8080,7 +8080,7 @@ function Library:CreateContextMenu(Items, Options)
     Options = Library:Validate(Options or {}, DefaultOptions)
     
     local ContextMenu = {
-        Open = false
+        IsOpen = false
     }
     
     local Container = Library:Create('Frame', {
@@ -8219,9 +8219,9 @@ function Library:CreateContextMenu(Items, Options)
     end)
     
     function ContextMenu:Open(Position)
-        if ContextMenu.Open then return end
+        if ContextMenu.IsOpen then return end
         
-        ContextMenu.Open = true
+        ContextMenu.IsOpen = true
         Container.Visible = true
         Container.Position = Position or Options.Position
         
@@ -8233,14 +8233,14 @@ function Library:CreateContextMenu(Items, Options)
     end
     
     function ContextMenu:Close()
-        if not ContextMenu.Open then return end
+        if not ContextMenu.IsOpen then return end
         
-        ContextMenu.Open = false
+        ContextMenu.IsOpen = false
         Container.Visible = false
     end
     
     function ContextMenu:Toggle(Position)
-        if ContextMenu.Open then
+        if ContextMenu.IsOpen then
             ContextMenu:Close()
         else
             ContextMenu:Open(Position)
@@ -8252,7 +8252,7 @@ function Library:CreateContextMenu(Items, Options)
     end
     
     Library:GiveSignal(InputService.InputBegan:Connect(function(Input)
-        if ContextMenu.Open and Input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if ContextMenu.IsOpen and Input.UserInputType == Enum.UserInputType.MouseButton1 then
             local AbsPos, AbsSize = Container.AbsolutePosition, Container.AbsoluteSize
             local MousePos = Input.Position
             
