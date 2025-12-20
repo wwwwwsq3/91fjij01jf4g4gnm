@@ -3340,7 +3340,8 @@ do
         Data.OriginalText = Data.Text
         
         local Label = {
-            Type = "Label"
+            Type = "Label";
+            Addons = {};
         }
 
         local Groupbox = self
@@ -3384,9 +3385,8 @@ do
             Groupbox:Resize()
         end
 
-        if (not Data.DoesWrap) then
-            setmetatable(Label, BaseAddons)
-        end
+        -- 所有标签均支持附加控件（如 ColorPicker），无论是否换行
+        setmetatable(Label, BaseAddons)
 
         Groupbox:AddBlank(5)
         Groupbox:Resize()
