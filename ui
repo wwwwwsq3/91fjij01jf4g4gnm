@@ -7051,7 +7051,15 @@ do
     SaveManager.Ignore = {}
     SaveManager.Parser = {
         Toggle = function(idx, val) return tostring(val) end,
-        ColorPicker = function(idx, val) return Color3.toHex(val) end,
+        ColorPicker = function(idx, val)
+            if typeof(val) == "Color3" and typeof(val.ToHex) == "function" then
+                return val:ToHex()
+            elseif typeof(val) == "table" and typeof(val.Value) == "Color3" and typeof(val.Value.ToHex) == "function" then
+                return val.Value:ToHex()
+            else
+                return tostring(val)
+            end
+        end,
         KeyPicker = function(idx, val) return val end,
         Slider = function(idx, val) return tostring(val) end,
         Dropdown = function(idx, val)
