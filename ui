@@ -5823,7 +5823,7 @@ do
                     end
 
                     for _, Button in next, TabboxButtons:GetChildren() do
-                        if not Button:IsA('UIListLayout') then
+                        if Button:IsA('GuiObject') then
                             Button.Size = UDim2.new(1 / TabCount, 0, 1, 0)
                         end
                     end
