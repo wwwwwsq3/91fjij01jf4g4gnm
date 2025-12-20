@@ -552,7 +552,7 @@ function Library:MakeDraggable(Instance, Cutoff, IsMainWindow)
                 end
 
                 local DragTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-                local OriginalPosition = Instance.Position
+                local OriginalColor = Instance.BackgroundColor3
                 
                 TweenService:Create(Instance, DragTweenInfo, {
                     BackgroundColor3 = Library.AccentColor,
@@ -570,7 +570,7 @@ function Library:MakeDraggable(Instance, Cutoff, IsMainWindow)
                 end
 
                 TweenService:Create(Instance, DragTweenInfo, {
-                    BackgroundColor3 = IsMainWindow and Library.MainColor or OriginalPosition,
+                    BackgroundColor3 = IsMainWindow and Library.MainColor or OriginalColor,
                 }):Play()
             end
         end)
