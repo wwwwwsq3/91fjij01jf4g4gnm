@@ -1939,7 +1939,7 @@ do
 
         Options[Idx] = KeyPicker
 
-        return self
+        return KeyPicker
     end
     
     function BaseAddonsFuncs:AddColorPicker(Idx, Info)
@@ -2579,7 +2579,7 @@ do
 
     Options[Idx] = ColorPicker
 
-    return self
+    return ColorPicker
 end
 
 function BaseAddonsFuncs:AddDropdown(Idx, Info)
