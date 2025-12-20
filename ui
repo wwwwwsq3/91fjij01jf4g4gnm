@@ -3402,6 +3402,16 @@ do
         return Label
     end
     
+    -- 允许 Groupbox 直接添加颜色选择器（包装 Label 的 AddColorPicker）
+    function BaseGroupboxFuncs:AddColorPicker(Idx, Info)
+        Info = Info or {}
+        -- 优先使用 Title/Text 作为展示
+        local titleText = Info.Title or Info.Text or Info.Name or "颜色选择"
+        -- 使用标签承载 ColorPicker（标签已挂载 BaseAddons，具备 AddColorPicker 方法）
+        local HolderLabel = self:AddLabel(titleText, false, Idx and (Idx .. "_label") or nil)
+        return HolderLabel:AddColorPicker(Idx, Info)
+    end
+    
     function BaseGroupboxFuncs:AddButton(...)
         local Button = typeof(select(1, ...)) == "table" and select(1, ...) or {
             Text = select(1, ...),
